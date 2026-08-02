@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Microchipagem - Rio de Janeiro</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#16202b; --card2:#1c2735; --text:#eef2f6; --muted:#93a4b8;
+    --accent:#4fd1c5; --accent2:#f6ad55; --accent3:#f56565; --border:#26333f;
+    --good:#48bb78;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0b131b,#0f1720 400px);color:var(--text);}
+  header{padding:28px 32px 16px;}
+  header h1{margin:0 0 6px;font-size:26px;font-weight:700;}
+  header p{margin:0;color:var(--muted);font-size:14px;}
+  .container{padding:0 32px 48px;max-width:1400px;margin:0 auto;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0 32px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .kpi .label{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;}
+  .kpi .value{font-size:30px;font-weight:800;margin-top:6px;}
+  .kpi.accent .value{color:var(--accent);}
+  .kpi.accent2 .value{color:var(--accent2);}
+  .kpi.accent3 .value{color:#f56565;}
+  section{margin-bottom:36px;}
+  .section-title{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
+  .section-title h2{font-size:18px;margin:0;}
+  .section-title span{color:var(--muted);font-size:13px;}
+  .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .card h3{margin:0 0 14px;font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+  canvas{max-width:100%;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);}
+  td{padding:8px 10px;border-bottom:1px solid #1e2a36;}
+  tr:hover td{background:#1a2531;}
+  .scroll-table{max-height:480px;overflow-y:auto;border-radius:10px;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-famoso{background:rgba(246,173,85,.18);color:var(--accent2);border:1px solid rgba(246,173,85,.4);}
+  .badge-pop{background:rgba(79,209,197,.14);color:var(--accent);border:1px solid rgba(79,209,197,.35);}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .tab-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;}
+  .tab-btn.active{background:var(--accent);color:#0b131b;border-color:var(--accent);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5;}
+  .rank-col{color:var(--muted);width:36px;}
+  .search-box{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13.5px;margin-bottom:12px;}
+  .search-box:focus{outline:1px solid var(--accent);}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:20px;}
+  .pill-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .zone-pill{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:2px 8px;font-size:11px;color:var(--muted);}
+
+  .barchart{display:flex;flex-direction:column;gap:10px;}
+  .barchart .row{display:grid;grid-template-columns:120px 1fr 56px;align-items:center;gap:10px;}
+  .barchart .row .rlabel{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .barchart .track{background:#0f1720;border-radius:6px;height:16px;overflow:hidden;border:1px solid var(--border);}
+  .barchart .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2c9d94,#4fd1c5);}
+  .track{background:#0f1720;border-radius:6px;height:14px;overflow:hidden;border:1px solid var(--border);}
+  .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2c9d94,#4fd1c5);}
+  .barchart .rval{font-size:12.5px;color:var(--muted);text-align:right;}
+  .legend{display:flex;gap:18px;margin-bottom:14px;font-size:12.5px;color:var(--muted);}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+  .barchart.dual .row{grid-template-columns:130px 1fr 1fr 100px;}
+  .barchart.dual .track2 .fill{background:linear-gradient(90deg,#c9812f,#f6ad55);}
+</style>
+</head>
+<body>
+<header>
+  <h1>🐾 Dashboard — Ação de Microchipagem</h1>
+  <p>Cidade do Rio de Janeiro · Período dos dados: 30/05/2026 a 31/07/2026 · Fonte: API do sistema (dados ao vivo, produção) · Atualizado em 01/08/2026 12:47 UTC</p>
+</header>
+
+<div class="container">
+
+  <div class="kpis">
+    <div class="kpi accent">
+      <div class="label">Ações realizadas</div>
+      <div class="value" id="kpi-acoes">–</div>
+    </div>
+    <div class="kpi accent2">
+      <div class="label">Animais microchipados</div>
+      <div class="value" id="kpi-animais">–</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Tutores cadastrados</div>
+      <div class="value" id="kpi-tutores">–</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Bairros atendidos</div>
+      <div class="value" id="kpi-bairros">–</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Regiões atendidas</div>
+      <div class="value" id="kpi-regioes">–</div>
+    </div>
+    <div class="kpi accent3">
+      <div class="label">Bairros ainda sem ação</div>
+      <div class="value" id="kpi-faltantes">–</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-title"><h2>Por bairro</h2><span>ações, animais microchipados e tutores cadastrados em cada bairro já atendido</span></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Animais microchipados por bairro (top 15)</h3>
+        <div class="barchart" id="chartBairroAnimais"></div>
+      </div>
+      <div class="card">
+        <h3>Tabela completa por bairro</h3>
+        <input class="search-box" id="searchBairro" placeholder="Buscar bairro...">
+        <div class="scroll-table">
+          <table id="tableBairros">
+            <thead><tr><th>Bairro</th><th>Região</th><th>Ações</th><th>Animais</th><th>Tutores</th><th>Cadastros/Ação</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Análise por região</h2><span>agregado de todos os bairros dentro de cada região</span></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Animais microchipados x tutores cadastrados por região</h3>
+        <div class="legend">
+          <span><span class="dot" style="background:#4fd1c5;"></span>Animais microchipados</span>
+          <span><span class="dot" style="background:#f6ad55;"></span>Tutores cadastrados</span>
+        </div>
+        <div class="barchart dual" id="chartRegiao"></div>
+      </div>
+      <div class="card">
+        <h3>Tabela por região</h3>
+        <div class="scroll-table">
+          <table id="tableRegioes">
+            <thead><tr><th>Região</th><th>Bairros</th><th>Ações</th><th>Animais</th><th>Tutores</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="note">"Regiões" seguem o agrupamento usado na própria planilha (subprefeituras/áreas de atuação), e não a divisão oficial de zonas do município.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Comparação com a Votação Marcio Ribeiro 2024</h2><span>bairros já atendidos x bairros pendentes, ordenados pela quantidade de votos recebida em cada bairro</span></div>
+    <p class="note" style="margin-bottom:14px;">Prioridade dos bairros pendentes segue a votação de Marcio Ribeiro (162 bairros votados). Os 44 bairros já atendidos foram cruzados com essa mesma lista.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>✅ Bairros já atendidos (44) — por votos</h3>
+        <input class="search-box" id="searchCovered" placeholder="Buscar bairro atendido...">
+        <div class="scroll-table">
+          <table id="tableCovered">
+            <thead><tr><th class="rank-col">#</th><th>Bairro</th><th>Votos</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>⏳ Bairros pendentes (118) — por votos</h3>
+        <input class="search-box" id="searchPending" placeholder="Buscar bairro pendente...">
+        <div class="scroll-table">
+          <table id="tablePending">
+            <thead><tr><th class="rank-col">#</th><th>Bairro</th><th>Votos</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Consumo de microchips por período</h2><span>animais microchipados (= microchips utilizados) agrupados por dia, semana e mês, para projeção de compras</span></div>
+    <div class="card" style="margin-bottom:20px;">
+      <h3>Filtro de período</h3>
+      <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+        <div>
+          <label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">De</label>
+          <input type="date" id="seriesFrom" class="search-box" style="margin-bottom:0;width:auto;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Até</label>
+          <input type="date" id="seriesTo" class="search-box" style="margin-bottom:0;width:auto;">
+        </div>
+        <button id="seriesReset" class="tab-btn" style="margin-bottom:0;">Período completo</button>
+      </div>
+    </div>
+    <div class="kpis" style="margin:0 0 20px;">
+      <div class="kpi accent">
+        <div class="label">Microchips no período</div>
+        <div class="value" id="kpi-series-total">–</div>
+      </div>
+      <div class="kpi accent2">
+        <div class="label">Média diária</div>
+        <div class="value" id="kpi-series-daily">–</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Média semanal</div>
+        <div class="value" id="kpi-series-weekly">–</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Projeção mensal</div>
+        <div class="value" id="kpi-series-monthly">–</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-view="dia">Por dia</button>
+      <button class="tab-btn" data-view="semana">Por semana</button>
+      <button class="tab-btn" data-view="mes">Por mês</button>
+    </div>
+    <div class="card">
+      <h3 id="seriesTitle">Microchips por dia</h3>
+      <div class="scroll-table">
+        <table id="tableSeries">
+          <thead><tr><th>Período</th><th>Microchips utilizados</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">A projeção mensal é calculada como (total no período ÷ dias no período) × 30. Use períodos maiores (ex: últimos 30-60 dias) para uma projeção mais estável.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>Dados de execução das ações: API do sistema (demandasrio.com.br, produção), 67 registros de Microchipagem entre 30/05/2026 e 31/07/2026. Ranking de prioridade: planilha "MARCIO RIBEIRO 2024" (aba de votação por bairro, 162 bairros votados). Atualizado automaticamente.</footer>
+
+<script>
+const AGG = {"bairros": [{"bairro": "Tijuca", "acoes": 7, "animais": 224, "tutores": 183, "regiao": "Grande Tijuca"}, {"bairro": "Taquara", "acoes": 4, "animais": 163, "tutores": 132, "regiao": "Jacarepaguá"}, {"bairro": "Botafogo", "acoes": 2, "animais": 126, "tutores": 97, "regiao": "Zona Sul"}, {"bairro": "Méier", "acoes": 2, "animais": 123, "tutores": 94, "regiao": "Grande Méier 2"}, {"bairro": "Madureira", "acoes": 2, "animais": 123, "tutores": 96, "regiao": "Grande Madureira"}, {"bairro": "Portuguesa", "acoes": 3, "animais": 118, "tutores": 91, "regiao": "Ilha do Governador"}, {"bairro": "Penha Circular", "acoes": 1, "animais": 83, "tutores": 56, "regiao": "Leopoldina"}, {"bairro": "Laranjeiras", "acoes": 1, "animais": 82, "tutores": 64, "regiao": "Zona Sul"}, {"bairro": "Vila Isabel", "acoes": 3, "animais": 78, "tutores": 57, "regiao": "Grande Tijuca"}, {"bairro": "Lins de Vasconcelos", "acoes": 2, "animais": 69, "tutores": 50, "regiao": "Grande Méier 2"}, {"bairro": "Rocha", "acoes": 1, "animais": 66, "tutores": 53, "regiao": "Grande Méier 1"}, {"bairro": "Bangu", "acoes": 1, "animais": 64, "tutores": 49, "regiao": "ZO - Bangu"}, {"bairro": "Benfica", "acoes": 1, "animais": 63, "tutores": 46, "regiao": "Grande Centro"}, {"bairro": "Catete", "acoes": 1, "animais": 63, "tutores": 43, "regiao": "Zona Sul"}, {"bairro": "Pilares", "acoes": 1, "animais": 62, "tutores": 43, "regiao": "Grande Méier 4"}, {"bairro": "Engenho da Rainha", "acoes": 1, "animais": 57, "tutores": 47, "regiao": "Grande Méier 4"}, {"bairro": "Tanque", "acoes": 1, "animais": 57, "tutores": 46, "regiao": "Jacarepaguá"}, {"bairro": "Freguesia", "acoes": 1, "animais": 56, "tutores": 45, "regiao": "Jacarepaguá"}, {"bairro": "Del Castilho", "acoes": 1, "animais": 54, "tutores": 40, "regiao": "Grande Méier 3"}, {"bairro": "Anil", "acoes": 1, "animais": 52, "tutores": 41, "regiao": "Jacarepaguá"}, {"bairro": "Engenho Novo", "acoes": 3, "animais": 51, "tutores": 41, "regiao": "Grande Méier 1"}, {"bairro": "Engenho de Dentro", "acoes": 2, "animais": 51, "tutores": 44, "regiao": "Grande Méier 2"}, {"bairro": "Praça Seca", "acoes": 2, "animais": 49, "tutores": 40, "regiao": "Jacarepaguá"}, {"bairro": "Rio Comprido", "acoes": 2, "animais": 49, "tutores": 41, "regiao": "Grande Centro"}, {"bairro": "Bonsucesso", "acoes": 2, "animais": 48, "tutores": 46, "regiao": "Leopoldina"}, {"bairro": "Maria da Graça", "acoes": 1, "animais": 46, "tutores": 28, "regiao": "Grande Méier 3"}, {"bairro": "Cascadura", "acoes": 1, "animais": 42, "tutores": 35, "regiao": "Grande Madureira"}, {"bairro": "Realengo", "acoes": 1, "animais": 37, "tutores": 30, "regiao": "ZO - Bangu"}, {"bairro": "Maracanã", "acoes": 1, "animais": 36, "tutores": 28, "regiao": "Grande Tijuca"}, {"bairro": "Água Santa", "acoes": 1, "animais": 36, "tutores": 29, "regiao": "Grande Méier 2"}, {"bairro": "Cosme Velho", "acoes": 1, "animais": 35, "tutores": 29, "regiao": "Zona Sul"}, {"bairro": "Gamboa", "acoes": 1, "animais": 34, "tutores": 28, "regiao": "Grande Centro"}, {"bairro": "Santo Cristo", "acoes": 1, "animais": 28, "tutores": 23, "regiao": "Grande Centro"}, {"bairro": "São Francisco Xavier", "acoes": 1, "animais": 28, "tutores": 21, "regiao": "Grande Méier 1"}, {"bairro": "Alto da Boa Vista", "acoes": 1, "animais": 25, "tutores": 18, "regiao": "Grande Tijuca"}, {"bairro": "Santa Teresa", "acoes": 1, "animais": 24, "tutores": 19, "regiao": "Grande Centro"}, {"bairro": "Jardim Guanabara", "acoes": 1, "animais": 21, "tutores": 17, "regiao": "Ilha do Governador"}, {"bairro": "Olaria", "acoes": 1, "animais": 19, "tutores": 13, "regiao": "Leopoldina"}, {"bairro": "Ribeira", "acoes": 1, "animais": 13, "tutores": 12, "regiao": "Ilha do Governador"}, {"bairro": "Cachambi", "acoes": 1, "animais": 7, "tutores": 5, "regiao": "Grande Méier 3"}, {"bairro": "Vila Valqueire", "acoes": 1, "animais": 5, "tutores": 5, "regiao": "Jacarepaguá"}, {"bairro": "Cocotá", "acoes": 1, "animais": 4, "tutores": 4, "regiao": "Ilha do Governador"}, {"bairro": "Irajá", "acoes": 1, "animais": 1, "tutores": 1, "regiao": "Grande Irajá"}, {"bairro": "Vila Kennedy", "acoes": 1, "animais": 0, "tutores": 0, "regiao": "ZO - Bangu"}], "regioes": [{"regiao": "Jacarepaguá", "acoes": 10, "animais": 382, "tutores": 309, "bairros": 6}, {"regiao": "Grande Tijuca", "acoes": 12, "animais": 363, "tutores": 286, "bairros": 4}, {"regiao": "Zona Sul", "acoes": 5, "animais": 306, "tutores": 233, "bairros": 4}, {"regiao": "Grande Méier 2", "acoes": 7, "animais": 279, "tutores": 217, "bairros": 4}, {"regiao": "Grande Centro", "acoes": 6, "animais": 198, "tutores": 157, "bairros": 5}, {"regiao": "Grande Madureira", "acoes": 3, "animais": 165, "tutores": 131, "bairros": 2}, {"regiao": "Ilha do Governador", "acoes": 6, "animais": 156, "tutores": 124, "bairros": 4}, {"regiao": "Leopoldina", "acoes": 4, "animais": 150, "tutores": 115, "bairros": 3}, {"regiao": "Grande Méier 1", "acoes": 5, "animais": 145, "tutores": 115, "bairros": 3}, {"regiao": "Grande Méier 4", "acoes": 2, "animais": 119, "tutores": 90, "bairros": 2}, {"regiao": "Grande Méier 3", "acoes": 3, "animais": 107, "tutores": 73, "bairros": 3}, {"regiao": "ZO - Bangu", "acoes": 3, "animais": 101, "tutores": 79, "bairros": 3}, {"regiao": "Grande Irajá", "acoes": 1, "animais": 1, "tutores": 1, "bairros": 1}], "totais": {"acoes": 67, "animais": 2472, "tutores": 1930, "bairros_atendidos": 44, "regioes_atendidas": 13}};
+
+const VOTACAO = {"covered": [{"bairro": "Tijuca", "votos": 5937}, {"bairro": "Vila Isabel", "votos": 3379}, {"bairro": "Rocha", "votos": 2649}, {"bairro": "Taquara", "votos": 2457}, {"bairro": "Engenho Novo", "votos": 2098}, {"bairro": "Freguesia", "votos": 1490}, {"bairro": "Bonsucesso", "votos": 1008}, {"bairro": "Maracanã", "votos": 947}, {"bairro": "Cachambi", "votos": 938}, {"bairro": "Tanque", "votos": 873}, {"bairro": "Praça Seca", "votos": 839}, {"bairro": "Rio Comprido", "votos": 743}, {"bairro": "Méier", "votos": 720}, {"bairro": "Engenho de Dentro", "votos": 617}, {"bairro": "Del Castilho", "votos": 525}, {"bairro": "Cascadura", "votos": 523}, {"bairro": "Cocotá", "votos": 512}, {"bairro": "Portuguesa", "votos": 478}, {"bairro": "Anil", "votos": 447}, {"bairro": "Jardim Guanabara", "votos": 418}, {"bairro": "Madureira", "votos": 415}, {"bairro": "Vila Valqueire", "votos": 375}, {"bairro": "Benfica", "votos": 355}, {"bairro": "Alto da Boa Vista", "votos": 344}, {"bairro": "Olaria", "votos": 341}, {"bairro": "Laranjeiras", "votos": 337}, {"bairro": "Engenho da Rainha", "votos": 330}, {"bairro": "Botafogo", "votos": 319}, {"bairro": "Pilares", "votos": 308}, {"bairro": "Santo Cristo", "votos": 304}, {"bairro": "Realengo", "votos": 266}, {"bairro": "Gamboa", "votos": 257}, {"bairro": "Lins de Vasconcelos", "votos": 243}, {"bairro": "São Francisco Xavier", "votos": 226}, {"bairro": "Catete", "votos": 211}, {"bairro": "Maria da Graça", "votos": 196}, {"bairro": "Cosme Velho", "votos": 175}, {"bairro": "Penha Circular", "votos": 166}, {"bairro": "Irajá", "votos": 165}, {"bairro": "Bangu", "votos": 154}, {"bairro": "Santa Teresa", "votos": 151}, {"bairro": "Vila Kennedy", "votos": 145}, {"bairro": "Água Santa", "votos": 130}, {"bairro": "Ribeira", "votos": 96}], "pending": [{"bairro": "Andaraí", "votos": 2340}, {"bairro": "Grajaú", "votos": 1209}, {"bairro": "Riachuelo", "votos": 1035}, {"bairro": "Bancários", "votos": 887}, {"bairro": "Centro", "votos": 827}, {"bairro": "Galeão", "votos": 640}, {"bairro": "Pechincha", "votos": 628}, {"bairro": "São Cristóvão", "votos": 571}, {"bairro": "Cidade De Deus", "votos": 569}, {"bairro": "Copacabana", "votos": 485}, {"bairro": "Quintino Bocaiuva", "votos": 478}, {"bairro": "Jacaré", "votos": 476}, {"bairro": "Magalhães Bastos", "votos": 446}, {"bairro": "Piedade", "votos": 441}, {"bairro": "Freguesia (Ilha Do Governador)", "votos": 429}, {"bairro": "Ramos", "votos": 417}, {"bairro": "Higienópolis", "votos": 395}, {"bairro": "Santa Cruz", "votos": 384}, {"bairro": "Curicica", "votos": 373}, {"bairro": "Inhauma", "votos": 365}, {"bairro": "Campo Grande", "votos": 359}, {"bairro": "Moneró", "votos": 358}, {"bairro": "Cosmos", "votos": 333}, {"bairro": "Barra Da Tijuca", "votos": 320}, {"bairro": "Cacuia", "votos": 309}, {"bairro": "Oswaldo Cruz", "votos": 286}, {"bairro": "Penha", "votos": 268}, {"bairro": "Pavuna", "votos": 260}, {"bairro": "Tomás Coelho", "votos": 256}, {"bairro": "Tauá", "votos": 250}, {"bairro": "Gardenia Azul", "votos": 247}, {"bairro": "Paciência", "votos": 243}, {"bairro": "Praça Da Bandeira", "votos": 231}, {"bairro": "Recreio", "votos": 221}, {"bairro": "Todos Os Santos", "votos": 221}, {"bairro": "Triagem", "votos": 214}, {"bairro": "Bairro De Fátima", "votos": 210}, {"bairro": "Campinho", "votos": 206}, {"bairro": "Saúde", "votos": 195}, {"bairro": "Estácio", "votos": 170}, {"bairro": "Jardim Botânico", "votos": 166}, {"bairro": "Camorim", "votos": 160}, {"bairro": "Bento Ribeiro", "votos": 154}, {"bairro": "Marechal Hermes", "votos": 153}, {"bairro": "Vila Da Penha", "votos": 152}, {"bairro": "Encantado", "votos": 132}, {"bairro": "Jardim América", "votos": 131}, {"bairro": "Rio Das Pedras", "votos": 120}, {"bairro": "Gávea", "votos": 119}, {"bairro": "Flamengo", "votos": 117}, {"bairro": "Ipanema", "votos": 117}, {"bairro": "Leblon", "votos": 116}, {"bairro": "Vaz Lobo", "votos": 111}, {"bairro": "Honório Gurgel", "votos": 106}, {"bairro": "Zumbi", "votos": 106}, {"bairro": "Anchieta", "votos": 103}, {"bairro": "São Conrado", "votos": 102}, {"bairro": "Cordovil", "votos": 100}, {"bairro": "Vargem Pequena", "votos": 98}, {"bairro": "Guadalupe", "votos": 97}, {"bairro": "Cavalcanti", "votos": 95}, {"bairro": "Engenheiro Leal", "votos": 94}, {"bairro": "Guarabu", "votos": 94}, {"bairro": "Brás De Pina", "votos": 89}, {"bairro": "Rocha Miranda", "votos": 88}, {"bairro": "Padre Miguel", "votos": 79}, {"bairro": "Cidade Nova", "votos": 71}, {"bairro": "Dende", "votos": 69}, {"bairro": "Glória", "votos": 63}, {"bairro": "Senador Camará", "votos": 63}, {"bairro": "Deodoro", "votos": 62}, {"bairro": "Jardim Sulacap", "votos": 59}, {"bairro": "Mangueira", "votos": 56}, {"bairro": "Inhoaíba", "votos": 54}, {"bairro": "Santíssimo", "votos": 52}, {"bairro": "Pitangueiras", "votos": 50}, {"bairro": "Caju", "votos": 49}, {"bairro": "Lapa", "votos": 49}, {"bairro": "Coelho Neto", "votos": 48}, {"bairro": "Guaratiba", "votos": 47}, {"bairro": "Vasco Da Gama", "votos": 46}, {"bairro": "Vicente De Carvalho", "votos": 44}, {"bairro": "Vargem Grande", "votos": 43}, {"bairro": "Humaita", "votos": 42}, {"bairro": "Vila Kosmos", "votos": 41}, {"bairro": "Itanhangá", "votos": 40}, {"bairro": "Vidigal", "votos": 39}, {"bairro": "Colégio", "votos": 37}, {"bairro": "Lagoa", "votos": 36}, {"bairro": "Vista Alegre", "votos": 36}, {"bairro": "Tomas Coelho", "votos": 35}, {"bairro": "Leme", "votos": 29}, {"bairro": "Vigário Geral", "votos": 29}, {"bairro": "Ricardo De Albuquerque", "votos": 25}, {"bairro": "Sepetiba", "votos": 25}, {"bairro": "Urca", "votos": 25}, {"bairro": "Pedra De Guaratiba", "votos": 22}, {"bairro": "Turiaçú", "votos": 22}, {"bairro": "Parada De Lucas", "votos": 20}, {"bairro": "Parque Colúmbia", "votos": 20}, {"bairro": "Costa Barros", "votos": 17}, {"bairro": "Jardim Bangu", "votos": 17}, {"bairro": "Jacarepaguá", "votos": 16}, {"bairro": "Acari", "votos": 15}, {"bairro": "Manguinhos", "votos": 15}, {"bairro": "Paquetá", "votos": 15}, {"bairro": "Augusto Vasconcelos", "votos": 12}, {"bairro": "Senador Vasconcelos", "votos": 12}, {"bairro": "Ilha De Guaratiba", "votos": 8}, {"bairro": "Catiri", "votos": 6}, {"bairro": "Parque Anchieta", "votos": 6}, {"bairro": "Tubiacanga", "votos": 6}, {"bairro": "Barros Filho", "votos": 5}, {"bairro": "Barra De Guaratiba", "votos": 4}, {"bairro": "Vila Militar", "votos": 4}, {"bairro": "Fundão", "votos": 3}, {"bairro": "Rocinha", "votos": 2}, {"bairro": "São Jorge", "votos": 1}]};
+
+const SERIES = [{"data": "2026-05-30T03:00:00.000Z", "animais": 75}, {"data": "2026-06-01T03:00:00.000Z", "animais": 16}, {"data": "2026-06-02T03:00:00.000Z", "animais": 66}, {"data": "2026-06-03T03:00:00.000Z", "animais": 63}, {"data": "2026-06-04T03:00:00.000Z", "animais": 41}, {"data": "2026-06-05T03:00:00.000Z", "animais": 54}, {"data": "2026-06-06T03:00:00.000Z", "animais": 56}, {"data": "2026-06-08T03:00:00.000Z", "animais": 34}, {"data": "2026-06-09T03:00:00.000Z", "animais": 44}, {"data": "2026-06-10T03:00:00.000Z", "animais": 22}, {"data": "2026-06-11T03:00:00.000Z", "animais": 7}, {"data": "2026-06-12T03:00:00.000Z", "animais": 21}, {"data": "2026-06-13T03:00:00.000Z", "animais": 44}, {"data": "2026-06-15T03:00:00.000Z", "animais": 38}, {"data": "2026-06-16T03:00:00.000Z", "animais": 46}, {"data": "2026-06-17T03:00:00.000Z", "animais": 13}, {"data": "2026-06-18T03:00:00.000Z", "animais": 35}, {"data": "2026-06-19T03:00:00.000Z", "animais": 38}, {"data": "2026-06-20T03:00:00.000Z", "animais": 36}, {"data": "2026-06-22T03:00:00.000Z", "animais": 42}, {"data": "2026-06-23T03:00:00.000Z", "animais": 32}, {"data": "2026-06-24T03:00:00.000Z", "animais": 41}, {"data": "2026-06-25T03:00:00.000Z", "animais": 4}, {"data": "2026-06-26T03:00:00.000Z", "animais": 20}, {"data": "2026-06-27T03:00:00.000Z", "animais": 36}, {"data": "2026-06-29T03:00:00.000Z", "animais": 1}, {"data": "2026-06-29T03:00:00.000Z", "animais": 24}, {"data": "2026-06-30T03:00:00.000Z", "animais": 21}, {"data": "2026-07-01T03:00:00.000Z", "animais": 38}, {"data": "2026-07-02T03:00:00.000Z", "animais": 28}, {"data": "2026-07-03T03:00:00.000Z", "animais": 17}, {"data": "2026-07-04T03:00:00.000Z", "animais": 99}, {"data": "2026-07-06T03:00:00.000Z", "animais": 28}, {"data": "2026-07-07T03:00:00.000Z", "animais": 52}, {"data": "2026-07-08T03:00:00.000Z", "animais": 32}, {"data": "2026-07-09T03:00:00.000Z", "animais": 25}, {"data": "2026-07-10T03:00:00.000Z", "animais": 37}, {"data": "2026-07-11T03:00:00.000Z", "animais": 25}, {"data": "2026-07-13T03:00:00.000Z", "animais": 14}, {"data": "2026-07-14T03:00:00.000Z", "animais": 19}, {"data": "2026-07-15T03:00:00.000Z", "animais": 9}, {"data": "2026-07-16T03:00:00.000Z", "animais": 7}, {"data": "2026-07-17T03:00:00.000Z", "animais": 64}, {"data": "2026-07-18T03:00:00.000Z", "animais": 83}, {"data": "2026-07-19T03:00:00.000Z", "animais": 85}, {"data": "2026-07-20T03:00:00.000Z", "animais": 52}, {"data": "2026-07-20T03:00:00.000Z", "animais": 74}, {"data": "2026-07-21T03:00:00.000Z", "animais": 5}, {"data": "2026-07-21T03:00:00.000Z", "animais": 11}, {"data": "2026-07-22T03:00:00.000Z", "animais": 7}, {"data": "2026-07-22T03:00:00.000Z", "animais": 24}, {"data": "2026-07-23T03:00:00.000Z", "animais": 50}, {"data": "2026-07-23T03:00:00.000Z", "animais": 21}, {"data": "2026-07-24T03:00:00.000Z", "animais": 27}, {"data": "2026-07-25T03:00:00.000Z", "animais": 38}, {"data": "2026-07-25T03:00:00.000Z", "animais": 60}, {"data": "2026-07-26T03:00:00.000Z", "animais": 62}, {"data": "2026-07-26T03:00:00.000Z", "animais": 57}, {"data": "2026-07-27T03:00:00.000Z", "animais": 63}, {"data": "2026-07-27T03:00:00.000Z", "animais": 82}, {"data": "2026-07-28T03:00:00.000Z", "animais": 21}, {"data": "2026-07-28T03:00:00.000Z", "animais": 57}, {"data": "2026-07-29T03:00:00.000Z", "animais": 37}, {"data": "2026-07-29T03:00:00.000Z", "animais": 26}, {"data": "2026-07-30T03:00:00.000Z", "animais": 24}, {"data": "2026-07-30T03:00:00.000Z", "animais": 42}, {"data": "2026-07-31T03:00:00.000Z", "animais": 0}];
+
+const fmt = n => n.toLocaleString('pt-BR');
+
+// KPIs
+document.getElementById('kpi-acoes').textContent = fmt(AGG.totais.acoes);
+document.getElementById('kpi-animais').textContent = fmt(AGG.totais.animais);
+document.getElementById('kpi-tutores').textContent = fmt(AGG.totais.tutores);
+document.getElementById('kpi-bairros').textContent = fmt(AGG.totais.bairros_atendidos);
+document.getElementById('kpi-regioes').textContent = fmt(AGG.totais.regioes_atendidas);
+document.getElementById('kpi-faltantes').textContent = fmt(VOTACAO.pending.length);
+
+// Chart: top 15 bairros by animais (barra simples em HTML/CSS)
+const top15 = [...AGG.bairros].sort((a,b)=>b.animais-a.animais).slice(0,15);
+(function renderBairroChart(){
+  const el = document.getElementById('chartBairroAnimais');
+  const max = Math.max(...top15.map(b=>b.animais)) || 1;
+  el.innerHTML = top15.map(b => `
+    <div class="row">
+      <div class="rlabel" title="${b.bairro}">${b.bairro}</div>
+      <div class="track"><div class="fill" style="width:${(b.animais/max*100).toFixed(1)}%"></div></div>
+      <div class="rval">${fmt(b.animais)}</div>
+    </div>`).join('');
+})();
+
+// Chart: regiao (barras duplas em HTML/CSS)
+const regSorted = [...AGG.regioes].sort((a,b)=>b.animais-a.animais);
+(function renderRegiaoChart(){
+  const el = document.getElementById('chartRegiao');
+  const max = Math.max(...regSorted.map(r=>Math.max(r.animais,r.tutores))) || 1;
+  el.innerHTML = regSorted.map(r => `
+    <div class="row">
+      <div class="rlabel" title="${r.regiao}">${r.regiao}</div>
+      <div class="track"><div class="fill" style="width:${(r.animais/max*100).toFixed(1)}%"></div></div>
+      <div class="track track2"><div class="fill" style="width:${(r.tutores/max*100).toFixed(1)}%"></div></div>
+      <div class="rval">${fmt(r.animais)} / ${fmt(r.tutores)}</div>
+    </div>`).join('');
+})();
+
+// Table: bairros
+function renderBairroTable(filter='') {
+  const tbody = document.querySelector('#tableBairros tbody');
+  tbody.innerHTML = '';
+  const data = [...AGG.bairros].sort((a,b)=>b.animais-a.animais)
+    .filter(b => b.bairro.toLowerCase().includes(filter.toLowerCase()));
+  for (const b of data) {
+    const tr = document.createElement('tr');
+    const media = b.acoes > 0 ? (b.tutores / b.acoes) : 0;
+    tr.innerHTML = `<td>${b.bairro}</td><td>${b.regiao}</td><td>${b.acoes}</td><td>${fmt(b.animais)}</td><td>${fmt(b.tutores)}</td><td>${media.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1})}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+renderBairroTable();
+document.getElementById('searchBairro').addEventListener('input', e => renderBairroTable(e.target.value));
+
+// Table: regioes
+(function renderRegiaoTable(){
+  const tbody = document.querySelector('#tableRegioes tbody');
+  for (const r of regSorted) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.regiao}</td><td>${r.bairros}</td><td>${r.acoes}</td><td>${fmt(r.animais)}</td><td>${fmt(r.tutores)}</td>`;
+    tbody.appendChild(tr);
+  }
+})();
+
+// Table: bairros atendidos (com check), ordenados por votos desc
+function renderCovered(filter='') {
+  const tbody = document.querySelector('#tableCovered tbody');
+  tbody.innerHTML = '';
+  VOTACAO.covered
+    .filter(m => m.bairro.toLowerCase().includes(filter.toLowerCase()))
+    .forEach((m) => {
+      const idx = VOTACAO.covered.indexOf(m) + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="rank-col">${idx}</td><td>${m.bairro}</td><td>${fmt(m.votos)}</td><td><span class="badge" style="background:rgba(72,187,120,.18);color:var(--good);border:1px solid rgba(72,187,120,.4);">✓ feito</span></td>`;
+      tbody.appendChild(tr);
+    });
+}
+renderCovered();
+document.getElementById('searchCovered').addEventListener('input', e => renderCovered(e.target.value));
+
+// Table: bairros pendentes, ordenados por votos desc
+function renderPending(filter='') {
+  const tbody = document.querySelector('#tablePending tbody');
+  tbody.innerHTML = '';
+  VOTACAO.pending
+    .filter(m => m.bairro.toLowerCase().includes(filter.toLowerCase()))
+    .forEach((m) => {
+      const idx = VOTACAO.pending.indexOf(m) + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="rank-col">${idx}</td><td>${m.bairro}</td><td>${fmt(m.votos)}</td>`;
+      tbody.appendChild(tr);
+    });
+}
+renderPending();
+document.getElementById('searchPending').addEventListener('input', e => renderPending(e.target.value));
+
+// ---- Secao: consumo de microchips por periodo ----
+(function seriesModule(){
+  if (!SERIES.length) return;
+
+  const dateOnly = iso => iso.slice(0,10); // YYYY-MM-DD
+  const allDates = SERIES.map(s => dateOnly(s.data)).sort();
+  const minDate = allDates[0];
+  const maxDate = allDates[allDates.length-1];
+
+  const fromInput = document.getElementById('seriesFrom');
+  const toInput = document.getElementById('seriesTo');
+  fromInput.value = minDate;
+  toInput.value = maxDate;
+  fromInput.min = minDate; fromInput.max = maxDate;
+  toInput.min = minDate; toInput.max = maxDate;
+
+  let currentView = 'dia';
+
+  function isoWeekKey(d) {
+    // d: Date object (UTC). Retorna "YYYY-Www" (semana ISO, segunda a domingo)
+    const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNum = (date.getUTCDay() + 6) % 7; // 0=segunda
+    date.setUTCDate(date.getUTCDate() - dayNum + 3);
+    const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
+    const week = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay()+6)%7)) / 7);
+    return `${date.getUTCFullYear()}-S${String(week).padStart(2,'0')}`;
+  }
+
+  function weekLabel(d) {
+    // segunda-feira daquela semana, formatada
+    const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNum = (date.getUTCDay() + 6) % 7;
+    date.setUTCDate(date.getUTCDate() - dayNum);
+    return `sem. ${date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', timeZone:'UTC'})}`;
+  }
+
+  function filtered() {
+    const from = fromInput.value || minDate;
+    const to = toInput.value || maxDate;
+    return SERIES.filter(s => {
+      const d = dateOnly(s.data);
+      return d >= from && d <= to;
+    });
+  }
+
+  function renderKPIs(rows) {
+    const total = rows.reduce((a,r)=>a+r.animais,0);
+    const dias = new Set(rows.map(r=>dateOnly(r.data))).size || 1;
+    const from = fromInput.value || minDate;
+    const to = toInput.value || maxDate;
+    const spanDias = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1);
+    const mediaDiaria = total / spanDias;
+    const mediaSemanal = mediaDiaria * 7;
+    const projecaoMensal = mediaDiaria * 30;
+    document.getElementById('kpi-series-total').textContent = fmt(total);
+    document.getElementById('kpi-series-daily').textContent = mediaDiaria.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    document.getElementById('kpi-series-weekly').textContent = mediaSemanal.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    document.getElementById('kpi-series-monthly').textContent = fmt(Math.round(projecaoMensal));
+  }
+
+  function groupBy(rows, view) {
+    const map = new Map();
+    for (const r of rows) {
+      const d = new Date(r.data);
+      let key, label, sortKey;
+      if (view === 'dia') {
+        key = dateOnly(r.data);
+        label = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'});
+        sortKey = key;
+      } else if (view === 'semana') {
+        key = isoWeekKey(d);
+        label = weekLabel(d);
+        sortKey = key;
+      } else {
+        key = key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+        label = d.toLocaleDateString('pt-BR', {month:'long', year:'numeric', timeZone:'UTC'});
+        sortKey = key;
+      }
+      if (!map.has(key)) map.set(key, {label, sortKey, total:0});
+      map.get(key).total += r.animais;
+    }
+    return [...map.values()].sort((a,b)=> a.sortKey < b.sortKey ? -1 : 1);
+  }
+
+  function renderTable(view) {
+    const rows = filtered();
+    const grouped = groupBy(rows, view);
+    const titleMap = {dia:'Microchips por dia', semana:'Microchips por semana', mes:'Microchips por mês'};
+    document.getElementById('seriesTitle').textContent = titleMap[view];
+    const tbody = document.querySelector('#tableSeries tbody');
+    tbody.innerHTML = '';
+    const max = Math.max(...grouped.map(g=>g.total), 1);
+    for (const g of [...grouped].reverse()) {
+      const tr = document.createElement('tr');
+      const pct = (g.total/max*100).toFixed(1);
+      tr.innerHTML = `<td>${g.label}</td><td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="track" style="flex:1;max-width:220px;"><div class="fill" style="width:${pct}%"></div></div>
+          <span>${fmt(g.total)}</span>
+        </div>
+      </td>`;
+      tbody.appendChild(tr);
+    }
+    renderKPIs(rows);
+  }
+
+  document.querySelectorAll('.tabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
+      renderTable(currentView);
+    });
+  });
+  fromInput.addEventListener('change', () => renderTable(currentView));
+  toInput.addEventListener('change', () => renderTable(currentView));
+  document.getElementById('seriesReset').addEventListener('click', () => {
+    fromInput.value = minDate;
+    toInput.value = maxDate;
+    renderTable(currentView);
+  });
+
+  renderTable(currentView);
+})();
+</script>
+</body>
+</html>
