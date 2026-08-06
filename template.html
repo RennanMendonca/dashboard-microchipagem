@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Microchipagem - Rio de Janeiro</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#16202b; --card2:#1c2735; --text:#eef2f6; --muted:#93a4b8;
+    --accent:#4fd1c5; --accent2:#f6ad55; --accent3:#f56565; --border:#26333f;
+    --good:#48bb78;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0b131b,#0f1720 400px);color:var(--text);}
+  header{padding:28px 32px 16px;}
+  header h1{margin:0 0 6px;font-size:26px;font-weight:700;}
+  header p{margin:0;color:var(--muted);font-size:14px;}
+  .container{padding:0 32px 48px;max-width:1400px;margin:0 auto;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0 32px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .kpi .label{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;}
+  .kpi .value{font-size:30px;font-weight:800;margin-top:6px;}
+  .kpi.accent .value{color:var(--accent);}
+  .kpi.accent2 .value{color:var(--accent2);}
+  .kpi.accent3 .value{color:#f56565;}
+  section{margin-bottom:36px;}
+  .section-title{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
+  .section-title h2{font-size:18px;margin:0;}
+  .section-title span{color:var(--muted);font-size:13px;}
+  .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;min-width:0;}
+  .card h3{margin:0 0 14px;font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+  canvas{max-width:100%;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);}
+  td{padding:8px 10px;border-bottom:1px solid #1e2a36;}
+  tr:hover td{background:#1a2531;}
+  .scroll-table{max-height:480px;overflow-y:auto;overflow-x:auto;border-radius:10px;}
+  @media (max-width:900px){
+    .grid2{grid-template-columns:1fr;}
+  }
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-famoso{background:rgba(246,173,85,.18);color:var(--accent2);border:1px solid rgba(246,173,85,.4);}
+  .badge-pop{background:rgba(79,209,197,.14);color:var(--accent);border:1px solid rgba(79,209,197,.35);}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .tab-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;}
+  .tab-btn.active{background:var(--accent);color:#0b131b;border-color:var(--accent);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5;}
+  .rank-col{color:var(--muted);width:36px;}
+  .search-box{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13.5px;margin-bottom:12px;}
+  .search-box:focus{outline:1px solid var(--accent);}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:20px;}
+  .pill-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .zone-pill{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:2px 8px;font-size:11px;color:var(--muted);}
+
+  .barchart{display:flex;flex-direction:column;gap:10px;}
+  .barchart .row{display:grid;grid-template-columns:120px 1fr 56px;align-items:center;gap:10px;}
+  .barchart .row .rlabel{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .barchart .track{background:#0f1720;border-radius:6px;height:16px;overflow:hidden;border:1px solid var(--border);}
+  .barchart .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2c9d94,#4fd1c5);}
+  .track{background:#0f1720;border-radius:6px;height:14px;overflow:hidden;border:1px solid var(--border);}
+  .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2c9d94,#4fd1c5);}
+  .barchart .rval{font-size:12.5px;color:var(--muted);text-align:right;}
+  .legend{display:flex;gap:18px;margin-bottom:14px;font-size:12.5px;color:var(--muted);}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+  .barchart.dual .row{grid-template-columns:130px 1fr 1fr 100px;}
+  .barchart.dual .track2 .fill{background:linear-gradient(90deg,#c9812f,#f6ad55);}
+</style>
+</head>
+<body>
+<header>
+  <h1>🐾 Dashboard — Ação de Microchipagem</h1>
+  <p>Cidade do Rio de Janeiro · Período dos dados: 30/05/2026 a 28/07/2026 · Fonte: planilha "Relatório Dashboard Microchipagem"</p>
+</header>
+
+<div class="container">
+
+  <div class="kpis">
+    <div class="kpi accent">
+      <div class="label">Ações realizadas</div>
+      <div class="value" id="kpi-acoes">–</div>
+    </div>
+    <div class="kpi accent2">
+      <div class="label">Animais microchipados</div>
+      <div class="value" id="kpi-animais">–</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Tutores cadastrados</div>
+      <div class="value" id="kpi-tutores">–</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Bairros atendidos</div>
+      <div class="value" id="kpi-bairros">–</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Regiões atendidas</div>
+      <div class="value" id="kpi-regioes">–</div>
+    </div>
+    <div class="kpi accent3">
+      <div class="label">Bairros ainda sem ação</div>
+      <div class="value" id="kpi-faltantes">–</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-title"><h2>Por bairro</h2><span>ações, animais microchipados e tutores cadastrados em cada bairro já atendido</span></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Animais microchipados por bairro (top 15)</h3>
+        <div class="barchart" id="chartBairroAnimais"></div>
+      </div>
+      <div class="card">
+        <h3>Tabela completa por bairro</h3>
+        <input class="search-box" id="searchBairro" placeholder="Buscar bairro...">
+        <div class="scroll-table">
+          <table id="tableBairros">
+            <thead><tr><th>Bairro</th><th>Região</th><th>Ações</th><th>Animais</th><th>Tutores</th><th>Cadastros/Ação</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Análise por região</h2><span>agregado de todos os bairros dentro de cada região</span></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Animais microchipados x tutores cadastrados por região</h3>
+        <div class="legend">
+          <span><span class="dot" style="background:#4fd1c5;"></span>Animais microchipados</span>
+          <span><span class="dot" style="background:#f6ad55;"></span>Tutores cadastrados</span>
+        </div>
+        <div class="barchart dual" id="chartRegiao"></div>
+      </div>
+      <div class="card">
+        <h3>Tabela por região</h3>
+        <div class="scroll-table">
+          <table id="tableRegioes">
+            <thead><tr><th>Região</th><th>Bairros</th><th>Ações</th><th>Animais</th><th>Tutores</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="note">"Regiões" seguem o agrupamento usado na própria planilha (subprefeituras/áreas de atuação), e não a divisão oficial de zonas do município.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Comparação com a Votação Marcio Ribeiro 2024</h2><span>bairros já atendidos x bairros pendentes, ordenados pela quantidade de votos recebida em cada bairro</span></div>
+    <p class="note" style="margin-bottom:14px;">Novo critério: em vez de fama/população, a prioridade dos bairros pendentes agora segue a votação de Marcio Ribeiro (162 bairros votados). Os 42 bairros já atendidos foram cruzados com essa mesma lista — todos encontrados.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>✅ Bairros já atendidos (42) — por votos</h3>
+        <input class="search-box" id="searchCovered" placeholder="Buscar bairro atendido...">
+        <div class="scroll-table">
+          <table id="tableCovered">
+            <thead><tr><th class="rank-col">#</th><th>Bairro</th><th>Votos</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>⏳ Bairros pendentes (120) — por votos</h3>
+        <input class="search-box" id="searchPending" placeholder="Buscar bairro pendente...">
+        <div class="scroll-table">
+          <table id="tablePending">
+            <thead><tr><th class="rank-col">#</th><th>Bairro</th><th>Votos</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Consumo de microchips por período</h2><span>animais microchipados (= microchips utilizados) agrupados por dia, semana e mês, para projeção de compras</span></div>
+    <div class="card" style="margin-bottom:20px;">
+      <h3>Filtro de período</h3>
+      <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+        <div>
+          <label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">De</label>
+          <input type="date" id="seriesFrom" class="search-box" style="margin-bottom:0;width:auto;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Até</label>
+          <input type="date" id="seriesTo" class="search-box" style="margin-bottom:0;width:auto;">
+        </div>
+        <button id="seriesReset" class="tab-btn" style="margin-bottom:0;">Período completo</button>
+      </div>
+    </div>
+    <div class="kpis" style="margin:0 0 20px;">
+      <div class="kpi accent">
+        <div class="label">Microchips no período</div>
+        <div class="value" id="kpi-series-total">–</div>
+      </div>
+      <div class="kpi accent2">
+        <div class="label">Média diária</div>
+        <div class="value" id="kpi-series-daily">–</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Média semanal</div>
+        <div class="value" id="kpi-series-weekly">–</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Projeção mensal</div>
+        <div class="value" id="kpi-series-monthly">–</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-view="dia">Por dia</button>
+      <button class="tab-btn" data-view="semana">Por semana</button>
+      <button class="tab-btn" data-view="mes">Por mês</button>
+    </div>
+    <div class="card">
+      <h3 id="seriesTitle">Microchips por dia</h3>
+      <div class="scroll-table">
+        <table id="tableSeries">
+          <thead><tr><th>Período</th><th>Microchips utilizados</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">A projeção mensal é calculada como (total no período ÷ dias no período) × 30. Use períodos maiores (ex: últimos 30-60 dias) para uma projeção mais estável.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>Dados de execução das ações: planilha do usuário (61 registros). Ranking de prioridade: planilha "MARCIO RIBEIRO 2024" (aba de votação por bairro, 162 bairros votados).</footer>
+
+<script>
+const AGG = {};
+
+const VOTACAO = {};
+
+const SERIES = [];
+
+const fmt = n => n.toLocaleString('pt-BR');
+
+// KPIs
+document.getElementById('kpi-acoes').textContent = fmt(AGG.totais.acoes);
+document.getElementById('kpi-animais').textContent = fmt(AGG.totais.animais);
+document.getElementById('kpi-tutores').textContent = fmt(AGG.totais.tutores);
+document.getElementById('kpi-bairros').textContent = fmt(AGG.totais.bairros_atendidos);
+document.getElementById('kpi-regioes').textContent = fmt(AGG.totais.regioes_atendidas);
+document.getElementById('kpi-faltantes').textContent = fmt(VOTACAO.pending.length);
+
+const top15 = [...AGG.bairros].sort((a,b)=>b.animais-a.animais).slice(0,15);
+(function renderBairroChart(){
+  const el = document.getElementById('chartBairroAnimais');
+  const max = Math.max(...top15.map(b=>b.animais)) || 1;
+  el.innerHTML = top15.map(b => `
+    <div class="row">
+      <div class="rlabel" title="${b.bairro}">${b.bairro}</div>
+      <div class="track"><div class="fill" style="width:${(b.animais/max*100).toFixed(1)}%"></div></div>
+      <div class="rval">${fmt(b.animais)}</div>
+    </div>`).join('');
+})();
+
+const regSorted = [...AGG.regioes].sort((a,b)=>b.animais-a.animais);
+(function renderRegiaoChart(){
+  const el = document.getElementById('chartRegiao');
+  const max = Math.max(...regSorted.map(r=>Math.max(r.animais,r.tutores))) || 1;
+  el.innerHTML = regSorted.map(r => `
+    <div class="row">
+      <div class="rlabel" title="${r.regiao}">${r.regiao}</div>
+      <div class="track"><div class="fill" style="width:${(r.animais/max*100).toFixed(1)}%"></div></div>
+      <div class="track track2"><div class="fill" style="width:${(r.tutores/max*100).toFixed(1)}%"></div></div>
+      <div class="rval">${fmt(r.animais)} / ${fmt(r.tutores)}</div>
+    </div>`).join('');
+})();
+
+function renderBairroTable(filter='') {
+  const tbody = document.querySelector('#tableBairros tbody');
+  tbody.innerHTML = '';
+  const data = [...AGG.bairros].sort((a,b)=>b.animais-a.animais)
+    .filter(b => b.bairro.toLowerCase().includes(filter.toLowerCase()));
+  for (const b of data) {
+    const tr = document.createElement('tr');
+    const media = b.acoes > 0 ? (b.tutores / b.acoes) : 0;
+    tr.innerHTML = `<td>${b.bairro}</td><td>${b.regiao}</td><td>${b.acoes}</td><td>${fmt(b.animais)}</td><td>${fmt(b.tutores)}</td><td>${media.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1})}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+renderBairroTable();
+document.getElementById('searchBairro').addEventListener('input', e => renderBairroTable(e.target.value));
+
+(function renderRegiaoTable(){
+  const tbody = document.querySelector('#tableRegioes tbody');
+  for (const r of regSorted) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.regiao}</td><td>${r.bairros}</td><td>${r.acoes}</td><td>${fmt(r.animais)}</td><td>${fmt(r.tutores)}</td>`;
+    tbody.appendChild(tr);
+  }
+})();
+
+function renderCovered(filter='') {
+  const tbody = document.querySelector('#tableCovered tbody');
+  tbody.innerHTML = '';
+  VOTACAO.covered
+    .filter(m => m.bairro.toLowerCase().includes(filter.toLowerCase()))
+    .forEach((m) => {
+      const idx = VOTACAO.covered.indexOf(m) + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="rank-col">${idx}</td><td>${m.bairro}</td><td>${fmt(m.votos)}</td><td><span class="badge" style="background:rgba(72,187,120,.18);color:var(--good);border:1px solid rgba(72,187,120,.4);">✓ feito</span></td>`;
+      tbody.appendChild(tr);
+    });
+}
+renderCovered();
+document.getElementById('searchCovered').addEventListener('input', e => renderCovered(e.target.value));
+
+function renderPending(filter='') {
+  const tbody = document.querySelector('#tablePending tbody');
+  tbody.innerHTML = '';
+  VOTACAO.pending
+    .filter(m => m.bairro.toLowerCase().includes(filter.toLowerCase()))
+    .forEach((m) => {
+      const idx = VOTACAO.pending.indexOf(m) + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="rank-col">${idx}</td><td>${m.bairro}</td><td>${fmt(m.votos)}</td>`;
+      tbody.appendChild(tr);
+    });
+}
+renderPending();
+document.getElementById('searchPending').addEventListener('input', e => renderPending(e.target.value));
+
+(function seriesModule(){
+  if (!SERIES.length) return;
+  const dateOnly = iso => iso.slice(0,10);
+  const allDates = SERIES.map(s => dateOnly(s.data)).sort();
+  const minDate = allDates[0];
+  const maxDate = allDates[allDates.length-1];
+  const fromInput = document.getElementById('seriesFrom');
+  const toInput = document.getElementById('seriesTo');
+  fromInput.value = minDate;
+  toInput.value = maxDate;
+  fromInput.min = minDate; fromInput.max = maxDate;
+  toInput.min = minDate; toInput.max = maxDate;
+  let currentView = 'dia';
+  function isoWeekKey(d) {
+    const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNum = (date.getUTCDay() + 6) % 7;
+    date.setUTCDate(date.getUTCDate() - dayNum + 3);
+    const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
+    const week = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay()+6)%7)) / 7);
+    return `${date.getUTCFullYear()}-S${String(week).padStart(2,'0')}`;
+  }
+  function weekLabel(d) {
+    const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNum = (date.getUTCDay() + 6) % 7;
+    date.setUTCDate(date.getUTCDate() - dayNum);
+    return `sem. ${date.toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', timeZone:'UTC'})}`;
+  }
+  function filtered() {
+    const from = fromInput.value || minDate;
+    const to = toInput.value || maxDate;
+    return SERIES.filter(s => {
+      const d = dateOnly(s.data);
+      return d >= from && d <= to;
+    });
+  }
+  function renderKPIs(rows) {
+    const total = rows.reduce((a,r)=>a+r.animais,0);
+    const from = fromInput.value || minDate;
+    const to = toInput.value || maxDate;
+    const spanDias = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1);
+    const mediaDiaria = total / spanDias;
+    const mediaSemanal = mediaDiaria * 7;
+    const projecaoMensal = mediaDiaria * 30;
+    document.getElementById('kpi-series-total').textContent = fmt(total);
+    document.getElementById('kpi-series-daily').textContent = mediaDiaria.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    document.getElementById('kpi-series-weekly').textContent = mediaSemanal.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    document.getElementById('kpi-series-monthly').textContent = fmt(Math.round(projecaoMensal));
+  }
+  function groupBy(rows, view) {
+    const map = new Map();
+    for (const r of rows) {
+      const d = new Date(r.data);
+      let key, label, sortKey;
+      if (view === 'dia') {
+        key = dateOnly(r.data);
+        label = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'});
+        sortKey = key;
+      } else if (view === 'semana') {
+        key = isoWeekKey(d);
+        label = weekLabel(d);
+        sortKey = key;
+      } else {
+        key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+        label = d.toLocaleDateString('pt-BR', {month:'long', year:'numeric', timeZone:'UTC'});
+        sortKey = key;
+      }
+      if (!map.has(key)) map.set(key, {label, sortKey, total:0});
+      map.get(key).total += r.animais;
+    }
+    return [...map.values()].sort((a,b)=> a.sortKey < b.sortKey ? -1 : 1);
+  }
+  function renderTable(view) {
+    const rows = filtered();
+    const grouped = groupBy(rows, view);
+    const titleMap = {dia:'Microchips por dia', semana:'Microchips por semana', mes:'Microchips por mês'};
+    document.getElementById('seriesTitle').textContent = titleMap[view];
+    const tbody = document.querySelector('#tableSeries tbody');
+    tbody.innerHTML = '';
+    const max = Math.max(...grouped.map(g=>g.total), 1);
+    for (const g of [...grouped].reverse()) {
+      const tr = document.createElement('tr');
+      const pct = (g.total/max*100).toFixed(1);
+      tr.innerHTML = `<td>${g.label}</td><td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="track" style="flex:1;max-width:220px;"><div class="fill" style="width:${pct}%"></div></div>
+          <span>${fmt(g.total)}</span>
+        </div>
+      </td>`;
+      tbody.appendChild(tr);
+    }
+    renderKPIs(rows);
+  }
+  document.querySelectorAll('.tabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
+      renderTable(currentView);
+    });
+  });
+  fromInput.addEventListener('change', () => renderTable(currentView));
+  toInput.addEventListener('change', () => renderTable(currentView));
+  document.getElementById('seriesReset').addEventListener('click', () => {
+    fromInput.value = minDate;
+    toInput.value = maxDate;
+    renderTable(currentView);
+  });
+  renderTable(currentView);
+})();
+</script>
+</body>
+</html>
