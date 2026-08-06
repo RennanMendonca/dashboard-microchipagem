@@ -72,7 +72,7 @@
 <body>
 <header>
   <h1>🐾 Dashboard — Ação de Microchipagem</h1>
-  <p>Cidade do Rio de Janeiro · Período dos dados: 30/05/2026 a 09/08/2026 · Fonte: API do sistema (dados ao vivo, produção) · Atualizado em 06/08/2026 13:27 UTC</p>
+  <p>Cidade do Rio de Janeiro · Período dos dados: 30/05/2026 a 09/08/2026 · Fonte: API do sistema (dados ao vivo, produção) · Atualizado em 06/08/2026 13:35 UTC</p>
 </header>
 
 <div class="container">
@@ -169,7 +169,6 @@
           <table id="tablePending">
             <thead><tr><th class="rank-col">#</th><th>Bairro</th><th>Votos</th></tr></thead>
             <tbody></tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -247,7 +246,6 @@ document.getElementById('kpi-bairros').textContent = fmt(AGG.totais.bairros_aten
 document.getElementById('kpi-regioes').textContent = fmt(AGG.totais.regioes_atendidas);
 document.getElementById('kpi-faltantes').textContent = fmt(VOTACAO.pending.length);
 
-// Chart: top 15 bairros by animais (barra simples em HTML/CSS)
 const top15 = [...AGG.bairros].sort((a,b)=>b.animais-a.animais).slice(0,15);
 (function renderBairroChart(){
   const el = document.getElementById('chartBairroAnimais');
@@ -260,7 +258,6 @@ const top15 = [...AGG.bairros].sort((a,b)=>b.animais-a.animais).slice(0,15);
     </div>`).join('');
 })();
 
-// Chart: regiao (barras duplas em HTML/CSS)
 const regSorted = [...AGG.regioes].sort((a,b)=>b.animais-a.animais);
 (function renderRegiaoChart(){
   const el = document.getElementById('chartRegiao');
@@ -274,7 +271,6 @@ const regSorted = [...AGG.regioes].sort((a,b)=>b.animais-a.animais);
     </div>`).join('');
 })();
 
-// Table: bairros
 function renderBairroTable(filter='') {
   const tbody = document.querySelector('#tableBairros tbody');
   tbody.innerHTML = '';
@@ -290,7 +286,6 @@ function renderBairroTable(filter='') {
 renderBairroTable();
 document.getElementById('searchBairro').addEventListener('input', e => renderBairroTable(e.target.value));
 
-// Table: regioes
 (function renderRegiaoTable(){
   const tbody = document.querySelector('#tableRegioes tbody');
   for (const r of regSorted) {
@@ -300,7 +295,6 @@ document.getElementById('searchBairro').addEventListener('input', e => renderBai
   }
 })();
 
-// Table: bairros atendidos (com check), ordenados por votos desc
 function renderCovered(filter='') {
   const tbody = document.querySelector('#tableCovered tbody');
   tbody.innerHTML = '';
@@ -316,7 +310,6 @@ function renderCovered(filter='') {
 renderCovered();
 document.getElementById('searchCovered').addEventListener('input', e => renderCovered(e.target.value));
 
-// Table: bairros pendentes, ordenados por votos desc
 function renderPending(filter='') {
   const tbody = document.querySelector('#tablePending tbody');
   tbody.innerHTML = '';
@@ -332,42 +325,33 @@ function renderPending(filter='') {
 renderPending();
 document.getElementById('searchPending').addEventListener('input', e => renderPending(e.target.value));
 
-// ---- Secao: consumo de microchips por periodo ----
 (function seriesModule(){
   if (!SERIES.length) return;
-
-  const dateOnly = iso => iso.slice(0,10); // YYYY-MM-DD
+  const dateOnly = iso => iso.slice(0,10);
   const allDates = SERIES.map(s => dateOnly(s.data)).sort();
   const minDate = allDates[0];
   const maxDate = allDates[allDates.length-1];
-
   const fromInput = document.getElementById('seriesFrom');
   const toInput = document.getElementById('seriesTo');
   fromInput.value = minDate;
   toInput.value = maxDate;
   fromInput.min = minDate; fromInput.max = maxDate;
   toInput.min = minDate; toInput.max = maxDate;
-
   let currentView = 'dia';
-
   function isoWeekKey(d) {
-    // d: Date object (UTC). Retorna "YYYY-Www" (semana ISO, segunda a domingo)
     const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-    const dayNum = (date.getUTCDay() + 6) % 7; // 0=segunda
+    const dayNum = (date.getUTCDay() + 6) % 7;
     date.setUTCDate(date.getUTCDate() - dayNum + 3);
     const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
     const week = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay()+6)%7)) / 7);
     return `${date.getUTCFullYear()}-S${String(week).padStart(2,'0')}`;
   }
-
   function weekLabel(d) {
-    // segunda-feira daquela semana, formatada
     const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
     const dayNum = (date.getUTCDay() + 6) % 7;
     date.setUTCDate(date.getUTCDate() - dayNum);
-    return `sem. ${date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', timeZone:'UTC'})}`;
+    return `sem. ${date.toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', timeZone:'UTC'})}`;
   }
-
   function filtered() {
     const from = fromInput.value || minDate;
     const to = toInput.value || maxDate;
@@ -376,10 +360,8 @@ document.getElementById('searchPending').addEventListener('input', e => renderPe
       return d >= from && d <= to;
     });
   }
-
   function renderKPIs(rows) {
     const total = rows.reduce((a,r)=>a+r.animais,0);
-    const dias = new Set(rows.map(r=>dateOnly(r.data))).size || 1;
     const from = fromInput.value || minDate;
     const to = toInput.value || maxDate;
     const spanDias = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1);
@@ -391,7 +373,6 @@ document.getElementById('searchPending').addEventListener('input', e => renderPe
     document.getElementById('kpi-series-weekly').textContent = mediaSemanal.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
     document.getElementById('kpi-series-monthly').textContent = fmt(Math.round(projecaoMensal));
   }
-
   function groupBy(rows, view) {
     const map = new Map();
     for (const r of rows) {
@@ -406,7 +387,7 @@ document.getElementById('searchPending').addEventListener('input', e => renderPe
         label = weekLabel(d);
         sortKey = key;
       } else {
-        key = key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+        key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
         label = d.toLocaleDateString('pt-BR', {month:'long', year:'numeric', timeZone:'UTC'});
         sortKey = key;
       }
@@ -415,7 +396,6 @@ document.getElementById('searchPending').addEventListener('input', e => renderPe
     }
     return [...map.values()].sort((a,b)=> a.sortKey < b.sortKey ? -1 : 1);
   }
-
   function renderTable(view) {
     const rows = filtered();
     const grouped = groupBy(rows, view);
@@ -437,7 +417,6 @@ document.getElementById('searchPending').addEventListener('input', e => renderPe
     }
     renderKPIs(rows);
   }
-
   document.querySelectorAll('.tabs .tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active'));
@@ -453,7 +432,6 @@ document.getElementById('searchPending').addEventListener('input', e => renderPe
     toInput.value = maxDate;
     renderTable(currentView);
   });
-
   renderTable(currentView);
 })();
 </script>
