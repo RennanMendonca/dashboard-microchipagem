@@ -1,0 +1,35 @@
+name: Atualiza Dashboard Microchipagem
+
+on:
+  schedule:
+    - cron: "5 11 * * *"   # 08:05 horário de Brasília (UTC-3, sem horário de verão)
+  workflow_dispatch: {}     # permite rodar manualmente pelo botão "Run workflow" no GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Gerar dashboard com dados ao vivo
+        env:
+          DEMANDASRIO_TOKEN: ${{ secrets.DEMANDASRIO_TOKEN }}
+        run: python3 build.py
+
+      - name: Validar HTML antes de publicar
+        run: python3 validate_html.py
+
+      - name: Commitar e publicar no GitHub Pages
+        run: |
+          git config user.email "dashboard-bot@users.noreply.github.com"
+          git config user.name "Dashboard Microchipagem Bot"
+          git add index.html
+          git diff --quiet --cached || git commit -m "Atualiza dashboard - $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
